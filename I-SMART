@@ -1,0 +1,128 @@
+#include <SoftwareSerial.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <Adafruit_Sensor.h>
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+#define OLED_RESET -1
+Adafruit_SSD1306 display(OLED_RESET);
+ 
+SoftwareSerial BT(10,11); // bluetooth module connected here 
+
+ float petrol;
+int mileage;
+
+
+int sendingunit = A0; 
+int Vdata = 0; 
+float voltage=0;
+String voice;
+int ignition = 9;
+int killswitch = 7;
+int mainignition = 6;
+
+ 
+void setup(){ 
+  
+   pinMode(sendingunit, INPUT);
+   pinMode(ignition,OUTPUT); 
+   pinMode(killswitch, OUTPUT);
+   digitalWrite(ignition, HIGH);
+   digitalWrite(killswitch, HIGH);
+   digitalWrite(mainignition,LOW);
+   Serial.begin(9600); 
+   BT.begin(9600);
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  delay(2000);
+  display.clearDisplay();
+  display.setTextColor(WHITE); 
+   
+} 
+char a;
+void loop(){ 
+  digitalWrite(mainignition, LOW);
+   // read the value at analog input 
+   Vdata = analogRead(sendingunit); 
+   voltage=(Vdata*(5.0/1024))-2.0833333;
+   petrol=(voltage/0.00024308333)/1000;                                                                                                                                 ;
+  mileage=petrol*30;
+  if(voltage < 0)
+  {
+    BT.print("FUEL: "); 
+BT.print("0");
+BT.print("LR");
+BT.println("MILEAGE:");
+BT.print("0kKM");
+  }
+  else
+  {
+ 
+BT.print("FUEL: "); 
+BT.print(petrol);
+BT.print("LR");
+BT.println("MILEAGE:"); 
+BT.print(mileage);
+BT.print("KM");
+  }
+delay(1000); 
+ if (BT.available())
+  // if text arrived in from BT serial...
+  {
+    a=(BT.read());
+    if (a=='1')
+    {
+      digitalWrite(ignition, LOW);// Turn LIGH ON
+      BT.println("IGNITION ON");
+    }
+    if (a=='2')
+    {
+      digitalWrite(ignition, HIGH);// Turn LIGHT OFF
+      BT.println("IGNITION OFF");
+    }
+if (a=='3')
+    {
+      digitalWrite(killswitch, LOW);// Turn LIGH ON
+      BT.println("BIKE LOCKED");
+    }
+    if (a=='4')
+    {
+      digitalWrite(killswitch, HIGH);// Turn LIGHT OFF
+      BT.println("BIKE UNLOCKED");
+    }
+
+
+}
+//fuel
+display.clearDisplay();
+display.setTextSize(1);
+  display.setCursor(0,0);
+  display.print("FUEL: ");
+  display.setTextSize(2);
+  display.setCursor(38,0);
+  display.print(petrol);
+  display.print(" ");
+  display.setTextSize(1);
+  display.cp437(true);
+  display.write(167);
+  display.setTextSize(2);
+  display.print("Ltr");
+  //mileage
+  display.setTextSize(1);
+  display.setCursor(0,40);
+  display.print("RANGE: ");
+  display.setTextSize(2);
+  display.setCursor(38,40);
+  display.print(mileage);
+  display.print(" ");
+  display.setTextSize(1);
+  display.cp437(true);
+  display.write(167);
+  display.setTextSize(2);
+  display.print("KM");
+  display.setTextSize(1);
+  display.setCursor(0,57);
+  display.print("I-SMART");
+ display.display();
+  
+}
